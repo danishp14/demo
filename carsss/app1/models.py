@@ -124,10 +124,10 @@ class CarWashService(models.Model):
         today = timezone.now().date()
         # Filter by the user's period selection
         if period == "today":  #C ount of current day
-            count = CarWashService.objects.filter(service_date__date=today).count()
+            count = CarWashService.objects.filter(service_date__date=today)
         elif period == "yesterday":  #C ount of previous day
             yesterday = today - timedelta(days=1)
-            count = CarWashService.objects.filter(service_date__date=yesterday).count()
+            count = CarWashService.objects.filter(service_date__date=yesterday)
         elif period == "weekly":  #C ount of weekly sales
             # Get the start of the current week (Monday) and end of the current week (Sunday)
             start_of_week = today - timedelta(days=today.weekday())  # Monday

@@ -190,20 +190,15 @@ class CustomerLoginView(APIView):
                 customer = Customer.objects.get(email=email)
                 # Check the password for the customer
                 if check_password(password, customer.password):
-                    try:
-                        employee = customer.employee  
+
                         # Generate JWT tokens for the customer
                         refresh = RefreshToken.for_user(customer)
                         return Response(
                             {   "access": str(refresh.access_token),
                                 "refresh": str(refresh)},
                             status=status.HTTP_200_OK
-                            )
-                    except EmployeesModel.DoesNotExist:
-                        return Response(
-                            {"detail": "Employee not found for this customer."}, 
-                            status=status.HTTP_400_BAD_REQUEST
-                            )
+                            )                   
+                  
                 else:
                     return Response(
                         {"detail": "Invalid credentials."},
@@ -346,16 +341,20 @@ class ServicesCountAPIView(APIView):
         if request.user.is_admin:    
             period = request.data.get("period", "today")  #Weekly Sale
             try:
-                count = CarWashService.count_services_by_period(period)
+                services = CarWashService.count_services_by_period(period) 
+                count_today = services.count()
+                total_earnings = sum(service.price for service in services)
+                serializer=CarWashServiceSerializer(services,many=True)
             except ValueError as e:
                 raise ValidationError(str(e))   # Will return a 400 error with the message
             # Return the count and period in the response
-            return Response({
-                    "period": period,
-                    "count": count,
-                }, 
-                status=status.HTTP_200_OK
-            )
+            response_data = {
+                'count': count_today,
+                "total_earnings":total_earnings,
+                'services': serializer.data,
+            }
+
+            return Response(response_data)
         return Response(
             {"detail": "Permission denied.(You are not admin)"},
               status=status.HTTP_403_FORBIDDEN
