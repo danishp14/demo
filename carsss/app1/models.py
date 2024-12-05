@@ -70,6 +70,8 @@ class Customer(models.Model):
     is_active = models.BooleanField(default=True)
     employee = models.ForeignKey(EmployeesModel, null=True, blank=True, on_delete=models.CASCADE,
                                  related_name='customers')
+    discount_remaining = models.IntegerField(default=0)  # Tracks remaining discount percentage
+    free_services_used = models.IntegerField(default=0)  # Track how many free services used
 
     def __str__(self):
         return self.email
@@ -105,6 +107,7 @@ class CarWashService(models.Model):
                                     ("in_progress", "In Progress"),
                                   ], 
                                   default="pending")
+    final_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
 
 
     def __str__(self):

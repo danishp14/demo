@@ -43,6 +43,11 @@ class EmployeeLoginSerializer(serializers.ModelSerializer):
         model = EmployeesModel
         fields = ["employee_name","password"]
 
+class EmpSee(serializers.ModelSerializer):
+    class Meta:
+        model = EmployeesModel
+        fields = ["employee_name", "salary", "is_admin", "last_working_day"]
+
 
 # Emp serializer for crud operation
 class EmpManage(serializers.ModelSerializer):
@@ -96,7 +101,7 @@ class CarWashServiceSerializer(serializers.ModelSerializer):
                                         ])
     class Meta:
         model = CarWashService
-        fields = ["id", "service_type", "employee", "customer", "status", "price", "service_date"]
+        fields = ["id", "service_type", "employee", "customer", "status", "final_price", "service_date"]
 
     # Check if the employee exists in the database
     def validate_employee(self, value):
