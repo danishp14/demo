@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import EmployeesModel,Customer,CarWashService
+from .models import EmployeesModel,Customer,CarWashService,Reviewmodel
 from django.contrib.auth.hashers import make_password
 import re
 
@@ -104,4 +104,22 @@ class CarWashServiceSerializer(serializers.ModelSerializer):
 
     # Check if the customer exists in the database
     def validate_customer(self, value):
+        return value
+
+
+class ReviewSerializer(serializers.ModelSerializer):
+    class Meta:
+        model=Reviewmodel
+        fields = ["ratings","review"]
+
+    def validate_ratings(self, value):
+        if value < 1 or value > 5:
+            raise serializers.ValidationError("Ratings must be between 1 and 5.")
+        if not isinstance(value, int):
+            raise serializers.ValidationError("Rating must be an integer.")
+        return value
+    
+    def validate_review(self, value):
+        if not value or value.strip() == "":
+            raise serializers.ValidationError("Review text cannot be empty.")
         return value

@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import EmpRegisterView,EmployeeLoginView,EmployeeAPIView,EmployeeLogoutView,AboutUs,SocialLinks
+from .views import EmpRegisterView,EmployeeLoginView,EmployeeAPIView,EmployeeLogoutView,AboutUs,SocialLinks,ReviewAPI
 from .views import CustomerRegisterView, CustomerLoginView,CustomerAPI,CarWashServiceView,ServicesCountAPIView, CustomerLogoutView 
 
 urlpatterns = [
@@ -22,4 +22,6 @@ urlpatterns = [
 
  path('about_us/',AboutUs.as_view(),name='about_us'),
  path('social_links/',SocialLinks.as_view(),name='social_links'),
+
+ path('review/',ReviewAPI.as_view(),name="review")
 ]

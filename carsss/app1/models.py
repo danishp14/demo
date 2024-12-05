@@ -124,17 +124,34 @@ class CarWashService(models.Model):
         today = timezone.now().date()
         # Filter by the user's period selection
         if period == "today":  #C ount of current day
-            count = CarWashService.objects.filter(service_date__date=today).count()
+            count = CarWashService.objects.filter(service_date__date=today)
         elif period == "yesterday":  #C ount of previous day
             yesterday = today - timedelta(days=1)
-            count = CarWashService.objects.filter(service_date__date=yesterday).count()
+            count = CarWashService.objects.filter(service_date__date=yesterday)
         elif period == "weekly":  #C ount of weekly sales
             # Get the start of the current week (Monday) and end of the current week (Sunday)
             start_of_week = today - timedelta(days=today.weekday())  # Monday
             end_of_week = start_of_week + timedelta(days=6)  # Sunday
-            count = CarWashService.objects.filter(service_date__gte=start_of_week, service_date__lte=end_of_week).count()
+            count = CarWashService.objects.filter(service_date__gte=start_of_week, service_date__lte=end_of_week)
         elif period == "this_month":  # Count of monthly sales
-            count = CarWashService.objects.filter(service_date__month=today.month, service_date__year=today.year).count()
+            count = CarWashService.objects.filter(service_date__month=today.month, service_date__year=today.year)
         else:
             count = 0 
         return count
+
+
+class Reviewmodel(models.Model):
+
+    RATINGS_CHOICES = [
+        (1, '1'),
+        (2, '2'),
+        (3, '3'),
+        (4, '4'),
+        (5, '5'),
+    ]
+        
+    ratings = models.IntegerField(choices=RATINGS_CHOICES, default=3)
+    review = models.CharField(max_length=500,blank=False)
+
+    def __str__(self):
+        return f"{self.ratings()}"

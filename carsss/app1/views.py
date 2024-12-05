@@ -2,7 +2,7 @@
 from django.db.models import Q
 from django.contrib.auth import authenticate
 from django.contrib.auth.hashers import check_password
-from django.shortcuts import render, get_object_or_404, HttpResponse, redirect
+from django.shortcuts import render, get_object_or_404, HttpResponse, redirect,HttpResponseRedirect
 
 # Third-party imports
 from rest_framework import status
@@ -12,13 +12,14 @@ from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken  # token
 from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework.exceptions import ValidationError, NotFound
+from rest_framework.pagination import PageNumberPagination
 
 # Local imports
-from .models import EmployeesModel, Customer, CarWashService
+from .models import EmployeesModel, Customer, CarWashService,Reviewmodel
 from .serializer import (
     EmployeeSerializer,EmployeeLoginSerializer,EmpManage,
     CustomerSerilizer,CustomerRegisterSerializer,CustomerLoginSerializer,
-    CarWashServiceSerializer,
+    CarWashServiceSerializer,ReviewSerializer,
 )
 
 
@@ -326,12 +327,12 @@ class CarWashServiceView(APIView):
         if request.user.is_admin:
             serializer = CarWashServiceSerializer(data=request.data)
             if serializer.is_valid():
-                    service = serializer.save()
-                    return Response(
+                service = serializer.save() 
+                return Response(
                         {"message": "Car wash service created successfully!", 
-                         "id": service.id},
-                        status=status.HTTP_201_CREATED
-                        )
+                            "id": service.id},
+                            status=status.HTTP_201_CREATED )
+
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         return Response(
             {"detail": "Permission denied.(You are not admin)"},
@@ -346,16 +347,21 @@ class ServicesCountAPIView(APIView):
         if request.user.is_admin:    
             period = request.data.get("period", "today")  #Weekly Sale
             try:
-                count = CarWashService.count_services_by_period(period)
+                services = CarWashService.count_services_by_period(period) 
+                count_today = services.count()
+
+                total_earnings = sum(service.price for service in services)
+                serializer=CarWashServiceSerializer(services,many=True)
             except ValueError as e:
                 raise ValidationError(str(e))   # Will return a 400 error with the message
             # Return the count and period in the response
-            return Response({
-                    "period": period,
-                    "count": count,
-                }, 
-                status=status.HTTP_200_OK
-            )
+            response_data = {
+                'count': count_today,
+                "total_earnings":total_earnings,
+                'services': serializer.data,
+            }
+
+            return Response(response_data)
         return Response(
             {"detail": "Permission denied.(You are not admin)"},
               status=status.HTTP_403_FORBIDDEN
@@ -388,3 +394,33 @@ class SocialLinks(APIView):
                 {"error": "Platform not supported"}, 
                 status=status.HTTP_400_BAD_REQUEST
                 )
+
+class ReviewPagination(PageNumberPagination):
+    page_size = 2 # Number of reviews per page
+    page_size_query_param = 'page_size'  # Allow the client to specify page size
+    max_page_size = 3  # Limit the maximum page size
+
+
+class ReviewAPI(APIView):
+    permission_classes= [IsAuthenticated]
+
+    def get(self, request):     
+        reviews = Reviewmodel.objects.all()
+        paginator = ReviewPagination()  # Create an instance of the custom pagination class
+        paginated_reviews = paginator.paginate_queryset(reviews, request)  # Apply pagination to the queryset
+	    # Serialize the paginated data
+        serializer = ReviewSerializer(paginated_reviews, many=True)
+        return paginator.get_paginated_response(serializer.data)  # Return paginated response
+            
+    def post(self,request):
+        serializer = ReviewSerializer(data=request.data)
+        if serializer.is_valid():
+            review= serializer.save()
+            return Response(
+                        {"message": "review and rating created successfully!", 
+                         "review": review.review,
+                         "ratings":review.ratings},
+                        status=status.HTTP_201_CREATED
+                        )
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
